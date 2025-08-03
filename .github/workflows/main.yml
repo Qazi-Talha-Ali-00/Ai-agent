@@ -1,0 +1,47 @@
+name: AI Content Agent Workflow
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: '*/5 * * * *'
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Playwright Browsers
+        run: python -m playwright install --with-deps
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create .env file
+        run: |
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+          echo "APIFY_API_KEY=${{ secrets.APIFY_API_KEY }}" >> .env
+          echo "APIFY_API_KEY_TRENDS=${{ secrets.APIFY_API_KEY_TRENDS }}" >> .env
+          echo "X_API_KEY=${{ secrets.X_API_KEY }}" >> .env
+          echo "X_API_SECRET=${{ secrets.X_API_SECRET }}" >> .env
+          echo "X_ACCESS_TOKEN=${{ secrets.X_ACCESS_TOKEN }}" >> .env
+          echo "X_ACCESS_TOKEN_SECRET=${{ secrets.X_ACCESS_TOKEN_SECRET }}" >> .env
+
+      - name: Run Collectors
+        run: |
+          python Collectors/news_collector.py
+          python Collectors/twitter_collector.py
+
+      - name: Run Content Generator
+        run: python Generator/content_generator.py
+
+      - name: Run X Publisher
+        run: python Publisher/post_x.py
