@@ -27,7 +27,6 @@ class DatabaseTweets:
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS tweets(
                            tweet_id TEXT PRIMARY KEY,
-                           trend_topic TEXT NOT NULL,
                            text TEXT,
                            user_handle TEXT,
                            url TEXT NOT NULL UNIQUE,
@@ -55,13 +54,12 @@ class DatabaseTweets:
         Inserts a single tweet into the database.
         The 'collected_at' timestamp is added automatically by the database.
         """
-        sql = ''' INSERT OR IGNORE INTO tweets(tweet_id, trend_topic, text, user_handle, url, reply_count, like_count)
-                  VALUES(?,?,?,?,?,?,?) '''
+        sql = ''' INSERT OR IGNORE INTO tweets(tweet_id, text, user_handle, url, reply_count, like_count)
+                  VALUES(?,?,?,?,?,?) '''
         try:
             cursor = self.conn.cursor()
             cursor.execute(sql, (
                 tweet_data.get('id'),
-                trend_topic,
                 tweet_data.get('text'),
                 tweet_data.get('author', {}).get('userName'),
                 tweet_data.get('url'),

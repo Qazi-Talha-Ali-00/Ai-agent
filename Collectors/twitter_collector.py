@@ -113,6 +113,22 @@ def main():
     if trending_tweets:
         for tweet in trending_tweets:
             text_lower = tweet.get('fullText','').lower()
+            id = tweet.get('id')
+            url = tweet.get('url')
+            like_count = tweet.get('likeCount',0)
+            reply_count = tweet.get('replyCount',0)
+            author = tweet.get('author',{}).get('userName','UnknownUser')
+            db.insert_tweet({
+                'id':id,
+                'text': text_lower,
+                'author': author,
+                'url': url,
+                'replyCount': reply_count,
+                'likeCount': like_count
+            })
+
+    db.close_connection()
+
 
 
 
