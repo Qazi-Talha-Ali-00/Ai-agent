@@ -2,6 +2,9 @@ import os
 from dotenv import load_dotenv
 from apify_client import ApifyClient
 import re
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from Database.tweets_db import DatabaseTweets
 
 load_dotenv()
 APIFY_API_KEY = os.getenv("APIFY_API_KEY")
@@ -56,7 +59,7 @@ def fetch_trending_topics():
 
 
 # Initialize the ApifyClient with your API token
-    client = ApifyClient(APIFY_API_KEY_TRENDS)
+    client = ApifyClient(APIFY_API_KEY)
 
 # Prepare the Actor input
     run_input = { "country": "india" }
@@ -97,29 +100,23 @@ def fetch_twitter_trends(trends, max_trend_items = 20,max_tweet_items=50):
     return dataset_items
 
 def main():
+    db = DatabaseTweets()
+
 
     trending_topics = fetch_trending_topics()
-    print(trending_topics)
-    # print("trending topics")
-    # print("="*50)
-    # print(trending_topics[0])
-    # print("="*50)
-    # print(trending_topics)
-    # trends = fetch_twitter_trends()
-    # print(trends[0])
-    # if trends:
-    #     print("Fetched tweets:")
-    #     for tweet in trends:
-    #         tweet_text = tweet.get('text', 'Unknown Tweet')
-    #         likes = tweet.get('favorite_count', 0)
-    #         retweets = tweet.get('retweet_count', 0)
-    #         replies = tweet.get('reply_count', 0)
-    #         created_at = tweet.get('created_at', 'Unknown Time')
-    #         print(f"Tweet: {tweet_text}")
-    #         print(f"Likes: {likes}, Retweets: {retweets}, Replies: {replies}")
-    #         print(f"Created at: {created_at}")
-    #         print("-" * 50)
-    # else:
-    #     print("No tweets fetched.")
+    for item in trending_topics:
+        db.insert_trend(item)
+
+    trending_topics_filtered = [item['topic'] for item in sorted(trending_topics, key=lambda x: x['tweet_volume'], reverse=True)]
+    trending_tweets = fetch_twitter_trends(trending_topics_filtered,5)
+
+    if trending_tweets:
+        for tweet in trending_tweets:
+            text_lower = tweet.get('fullText','').lower()
+
+
+
+
+    
 if __name__ == "__main__":
     main()
