@@ -56,19 +56,17 @@ def get_tweet_volume(volume_str: str | None) -> int:
     return 0
 
 def fetch_trending_topics():
-
-
-# Initialize the ApifyClient with your API token
+    # Initialize the ApifyClient with your API token
     client = ApifyClient(APIFY_API_KEY)
 
-# Prepare the Actor input
+    # Prepare the Actor input
     run_input = { "country": "india" }
 
-# Run the Actor and wait for it to finish
+    # Run the Actor and wait for it to finish
     run = client.actor("buk0BEIinZ6vfMEq1").call(run_input=run_input)
     trending_topics = []
 
-# Fetch and print Actor results from the run's dataset (if there are any)
+    # Fetch and print Actor results from the run's dataset (if there are any)
     for item in client.dataset(run["defaultDatasetId"]).iterate_items():
         trending_topics.append({"topic": item.get("topic", "Unknown Topic"),
                                 "tweet_volume": get_tweet_volume(item.get("tweet_volume", None))})
@@ -87,8 +85,9 @@ def fetch_twitter_trends(trends, max_trend_items = 20,max_tweet_items=50):
 
     # Manually provide trending topics as searchTerms
     run_input = {
-        "searchTerms": trends[:max_trend_items],  # Replace with actual trending topics
-        "maxItems": max_tweet_items
+        "searchTerms": trends[:max_trend_items], 
+        "maxItems": max_tweet_items,
+        "sort": "Top"
     }
 
     actor_run = client.actor(actor_id).call(run_input=run_input)
@@ -102,29 +101,37 @@ def fetch_twitter_trends(trends, max_trend_items = 20,max_tweet_items=50):
 def main():
     db = DatabaseTweets()
 
-
     trending_topics = fetch_trending_topics()
     for item in trending_topics:
         db.insert_trend(item)
 
     trending_topics_filtered = [item['topic'] for item in sorted(trending_topics, key=lambda x: x['tweet_volume'], reverse=True)]
-    trending_tweets = fetch_twitter_trends(trending_topics_filtered,5)
+    
+    raw_trending_tweets = fetch_twitter_trends(trending_topics_filtered, max_trend_items=5, max_tweet_items=100) 
+    minimum_views = 10000 
+    trending_tweets_with_views = [
+        tweet for tweet in raw_trending_tweets 
+        if tweet.get('viewCount', 0) >= minimum_views
+    ]
 
-    if trending_tweets:
-        for tweet in trending_tweets:
+    if trending_tweets_with_views:
+        for tweet in trending_tweets_with_views:
             text_lower = tweet.get('fullText','').lower()
             id = tweet.get('id')
             url = tweet.get('url')
             like_count = tweet.get('likeCount',0)
             reply_count = tweet.get('replyCount',0)
             author = tweet.get('author',{}).get('userName','UnknownUser')
+            view_count = tweet.get('viewCount', 0)
+
             db.insert_tweet({
                 'id':id,
                 'text': text_lower,
                 'author': author,
                 'url': url,
                 'replyCount': reply_count,
-                'likeCount': like_count
+                'likeCount': like_count,
+                'viewCount': view_count
             })
 
     db.close_connection()
