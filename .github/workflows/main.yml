@@ -19,11 +19,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Playwright Browsers
-        run: python -m playwright install --with-deps
-
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Install Playwright Browsers
+        run: python -m playwright install --with-deps
 
       - name: Create .env file
         run: |
