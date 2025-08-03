@@ -1,4 +1,8 @@
 .env
 .venv
 __pycache__
-
+*/__pyache__/
+*.pyc
+*.db
+/ai_agent
+*.sqlite3
