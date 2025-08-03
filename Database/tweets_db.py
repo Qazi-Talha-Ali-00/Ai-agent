@@ -49,7 +49,7 @@ class DatabaseTweets:
         except sqlite3.Error as e:
             logging.error(f"Error creating tables: {e}")
         
-    def insert_tweet(self, tweet_data: dict, trend_topic: str):
+    def insert_tweet(self, tweet_data: dict):
         """
         Inserts a single tweet into the database.
         The 'collected_at' timestamp is added automatically by the database.
@@ -61,7 +61,7 @@ class DatabaseTweets:
             cursor.execute(sql, (
                 tweet_data.get('id'),
                 tweet_data.get('text'),
-                tweet_data.get('author', {}).get('userName'),
+                tweet_data.get('author', "UnknownUser"),
                 tweet_data.get('url'),
                 tweet_data.get('replyCount', 0),
                 tweet_data.get('likeCount', 0)
